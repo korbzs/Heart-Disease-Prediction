@@ -1,70 +1,152 @@
+from sklearn.discriminant_analysis import StandardScaler
+from sklearn.metrics import confusion_matrix
 import streamlit as st
+import pandas as pd
+import numpy as np
 
+import json
+import joblib
 
-st.markdown(
-    """
-    <style>
-    .stImage {
-        display: flex;
-        justify-content: flex-end;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
+st.title("Heart Disease Prediction Model")
+
+models = (
+    "XGBoost_model.joblib",
+    "RandomForest_model.joblib"
 )
+selected_model = st.selectbox("Choose a model to evaluate your infos", options=models, index=0)
 
-# Title and subtitle
-col1, col2 = st.columns([3, 1])
-# Title and subtitle in the left column
-with col1:
-    st.title("Heart Attack Prediction")
-    st.subheader("Do you have a healthy heart?")
+@st.cache_resource
+def load_model(model_path: str):
+    try:
+        model = joblib.load(model_path)
+        st.success(f"Model '{model_path}' loaded successfully!")
+        return model
+    except Exception as e:
+        st.error(f"Failed to load model '{model_path}'. Error: {e}")
+        return None
 
-# Image in the right column
-with col2:
-    st.image("heart.jpg", width=150)
+# Load the model based on user selection
+sl_model = load_model(selected_model)
 
-# Form for user input
-with st.form("heart_attack_form"):
-    age = st.slider("Your Age", 18, 100, value=60,)
-    sex = st.selectbox("Your Gender", [0, 1], format_func=lambda x: ["Women", "Men"][x], index=1)
-    cp = st.selectbox("Your Chest Pain Type", [0, 1, 2, 3], format_func=lambda x: ["asymptomatic", "atypical angina", "non-anginal pain", "typical angina"][x])
-    trestbps = st.slider("Your Resting Blood Pressure [mm/Hg]", 90, 200, value=145)
-    chol = st.slider("Your Cholesterol Measurement[mg/dl]", 200, 600, value= 400)
-    st.text("Is Your Fasting Blood Sugar Greater Than 120 mg/dl?")
-    fbs = st.checkbox("Yes it is")
-    restecg = st.selectbox("Your Resting ECG Results", [0, 1, 2], format_func=lambda x: ["showing probable or definite left ventricular hypertrophy by Estes’ criteria", "normal", "having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)"][x])
-    thalach = st.slider("Your Maximum Heart Rate", 70, 200, value=145)
-    st.text("Have You Ever Experienced Angina When Exercising?")
-    exang = st.checkbox("Yes I have")
-    oldpeak = st.slider("Your ST depression induced by exercise relative to rest", 0.0, 6.0, value=3.0)
-    slope = st.selectbox("The slope of the peak exercise ST segment", [0, 1, 2], format_func=lambda x: ["downsloping", "flat", "upsloping"][x])
-    ca = st.slider("The number of major vessels (0–3)", 0.0, 3.0, value=1.5, step=0.1)
-    thal = st.selectbox("A blood disorder called thalassemia", [0, 1, 2], format_func=lambda x: ["fixed defect (no blood flow in some part of the heart)", "normal blood flow", "reversible defect (a blood flow is observed but it is not normal)"][x])
+# Display model loading status
+if sl_model:
+    st.text("Model is ready for prediction.")
+else:
+    st.text("Please select a valid model.")
+    
 
-    # Submit button
-    submitted = st.form_submit_button("Submit")
+def run_webapp(model):
+    cnt = 0
+    st.markdown(
+        """
+        <style>
+        .stImage {
+            display: flex;
+            justify-content: flex-end;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-    if submitted:
-        st.write("Form submitted successfully!")
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.title("Heart Attack Prediction")
+        st.subheader("Do you have a healthy heart?")
+
+    with col2:
+        st.image("heart.jpg", width=150)
+
+
+    #cp, trtrbps, exng, slp, caa, thall
+    with st.form("heart_attack_form"):
+        # age = st.slider("Your Age [age]", 18, 100, value=30)
+        # sex = st.selectbox("Your Gender [sex]", [0, 1], format_func=lambda x: ["Women", "Men"][x], index=1)
+        cp = st.selectbox("Your Chest Pain Type [cp]", [0, 1, 2, 3],
+                          format_func=lambda x: ["asymptomatic (tünetmentes)", "atypical angina", "typical angina (H)", "non-anginal pain"][x], index=0)
+        trtbps = st.slider("Your Resting Blood Pressure [mm/Hg] [trtbps]", 90, 200, value=120, step=5)
+        # chol = st.slider("Your Cholesterol Measurement[mg/dl] [chol]", 200, 600, value= 400)
+        # st.text("Is Your Fasting Blood Sugar Greater Than 120 mg/dl? [fbs]")
+        # fbs = st.checkbox("Yes it is")
         
-        #model
+        # restecg = st.selectbox("Your Resting ECG Results [restecg]", [0, 1, 2],
+        #                        format_func=lambda x: ["normal",
+        #                                             "having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)",
+        #                                             "showing probable or definite left ventricular hypertrophy by Estes’ criteria"][x],
+        #                        index=0
+        # )
 
-        print(f"Age: {age}")
-        print(f"Sex: {sex}")
-        print(f"Chest Pain Type: {cp}")
-        print(f"Resting Blood Pressure: {trestbps}")
-        print(f"Cholesterol: {chol}")
-        print(f"Fasting Blood Sugar: {fbs}")
-        print(f"Resting ECG: {restecg}")
-        print(f"Maximum Heart Rate: {thalach}")
-        print(f"Exercise Induced Angina: {exang}")
-        print(f"ST Depression: {oldpeak}")
-        print(f"Slope: {slope}")
-        print(f"Number of Major Vessels: {ca}")
-        print(f"Thalassemia: {thal}")
+        # thalach = st.slider("Your Maximum Heart Rate [thalach]", 70, 200, value=145)
+        st.text("Have You Ever Experienced Angina When Exercising? [exng]")
+        exng = st.checkbox("Yes I have")
+        # oldpeak = st.slider("Your ST depression induced by exercise relative to rest [oldpeak]", 0.0, 6.0, value=3.0)
+        slp = st.selectbox("The slope of the peak exercise ST segment [slp]", [0, 1, 2], format_func=lambda x: ["downsloping (L)", "flat", "upsloping (H)"][x]
+        )
+        caa = st.slider("The number of major vessels (0–4) [caa]", 0, 4, value=1, step=1)
+        thall = st.selectbox("A blood disorder called thalassemia [thall]", [0, 1, 2],
+                            format_func=lambda x: ["normal blood flow (L)",
+                            "fixed defect (no blood flow in some part of the heart) (H)",
+                            "reversible defect (a blood flow is observed but it is not normal)"][x]
+        ) # add +1 at input data
 
+        submitted = st.form_submit_button("Submit")
 
-# Run the app
+        if submitted:
+
+            input_data = {
+                # "age": age, "sex": sex,
+                # "chol": chol, 
+                # "fbs": fbs, "restecg": restecg, "thalach": thalach,
+                # "oldpeak": oldpeak,
+                "cp": cp, "trtbps": trtbps, "exng": exng, 
+                "slp": slp, "caa": caa, "thall": thall+1
+            }
+            input_df = pd.DataFrame([input_data])
+            print("Input DataFrame Columns:", input_df.columns)
+            print("input DataFrame:", input_df, sep="\n")
+            try:
+                input_df = input_df[['cp', 'trtbps', 'exng', 'slp', 'caa', 'thall']]
+            except KeyError as e:
+                st.error(f"Missing column: {e}")
+                st.stop()
+
+            scaler = joblib.load("scaler.pkl")
+
+            input_df_scaled = scaler.transform(input_df)
+
+            prediction = model.predict(input_df_scaled)[0]
+
+            print("pred", prediction)
+
+            prediction_label = "High risk" if prediction == 1 else "Low risk"
+            st.write(f"### Prediction: {prediction_label}")
+
+            input_df["prediction"] = prediction_label
+            # Debug
+            print("Updated Input DataFrame:\n", input_df, sep="\n")
+            if "results_df" not in st.session_state:
+                st.session_state["results_df"] = pd.DataFrame(columns=input_df.columns)
+
+            st.session_state["results_df"] = pd.concat([st.session_state["results_df"], input_df], ignore_index=True)
+
+            st.write("### Recorded Inputs and Predictions")
+            st.dataframe(st.session_state["results_df"])
+
+            #cp, rtrbps, exng, slp, caa, thall
+
+            # print(f"Age: {age}")
+            # print(f"Sex: {sex}")
+            # print(f"Fasting Blood Sugar: {fbs}")
+            # print(f"Cholesterol: {chol}")
+            # print(f"Resting ECG: {restecg}")
+            # print(f"Maximum Heart Rate: {thalach}")
+            # print(f"Chest Pain Type: {cp}")
+            # print(f"ST Depression: {oldpeak}")
+            print(f"Resting Blood Pressure: {trtbps}")
+            print(f"Exercise Induced Angina: {exng}")
+            print(f"Slope: {slp}")
+            print(f"Number of Major Vessels: {caa}")
+            print(f"Thalassemia: {thall}")
+
 if __name__ == "__main__":
-    pass
+    run_webapp(sl_model)

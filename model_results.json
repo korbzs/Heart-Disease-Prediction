@@ -1,0 +1,25 @@
+{
+    "smote": 0.91,
+    "test_size": 0.2,
+    "model_name": "XGBoost",
+    "best_params": {
+        "learning_rate": 0.01,
+        "max_depth": 3,
+        "n_estimators": 100,
+        "subsample": 0.7
+    },
+    "accuracy": 0.9206349206349206,
+    "avg_score": 0.9222222222222223,
+    "confusion_matrix": [
+        [
+            27,
+            3
+        ],
+        [
+            2,
+            31
+        ]
+    ],
+    "roc_auc": 0.905050505050505,
+    "classification_report": "                                precision    recall  f1-score   support\n\n lower chance of heart disease    0.93103   0.90000   0.91525        30\nhigher chance of heart disease    0.91176   0.93939   0.92537        33\n\n                      accuracy                        0.92063        63\n                     macro avg    0.92140   0.91970   0.92031        63\n                  weighted avg    0.92094   0.92063   0.92055        63\n"
+}
