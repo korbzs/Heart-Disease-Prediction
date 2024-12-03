@@ -110,7 +110,7 @@ def run_webapp(model):
                 st.error(f"Missing column: {e}")
                 st.stop()
 
-            scaler = joblib.load("scaler.pkl")
+            scaler = joblib.load("scaler_cp_trtbps_exng_slp_caa_thall.pkl")
 
             input_df_scaled = scaler.transform(input_df)
 
