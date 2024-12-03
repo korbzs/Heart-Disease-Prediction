@@ -79,8 +79,8 @@ def run_webapp(model):
         cp = st.selectbox("------ Your Chest Pain Type [cp] -----", [0, 1, 2, 3],
                           format_func=lambda x: ["asymptomatic (tünetmentes)", "atypical angina", "typical angina (H)", "non-anginal pain"][x], index=0)
         trtbps = st.slider("------ Your Resting Blood Pressure [mm/Hg] [trtbps] --------", 90, 200, value=120, step=5)
-        exng = st.checkbox("Yes I have")
         st.text("------- Have You Ever Experienced Angina When Exercising? [exng] --------")
+        exng = st.checkbox("Yes I have")
         slp = st.selectbox("------- The slope of the peak exercise ST segment [slp] -------", [0, 1, 2], format_func=lambda x: ["downsloping (L)", "flat", "upsloping (H)"][x]
         )
         caa = st.slider("-------- The number of major vessels (0–4) [caa] --------", 0, 4, value=1, step=1)
@@ -128,7 +128,7 @@ def run_webapp(model):
                 st.error(f"Missing column: {e}")
                 st.stop()
 
-            
+
 
             prediction = model.predict(input_df_scaled)[0]
 
