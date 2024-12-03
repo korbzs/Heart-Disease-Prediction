@@ -60,37 +60,45 @@ def run_webapp(model):
 
     #cp, trtrbps, exng, slp, caa, thall
     with st.form("heart_attack_form"):
-        age = st.slider("Your Age [age]", 18, 100, value=30)
-        sex = st.selectbox("Your Gender [sex]", [0, 1], format_func=lambda x: ["Women", "Men"][x], index=1)
-        chol = st.slider("Your Cholesterol Measurement[mg/dl] [chol]", 200, 600, value= 400)
-        st.text("Is Your Fasting Blood Sugar Greater Than 120 mg/dl? [fbs]")
-        fbs = st.checkbox("Yes it is")
+        # age = st.slider("Your Age [age]", 18, 100, value=30)
+        # sex = st.selectbox("Your Gender [sex]", [0, 1], format_func=lambda x: ["Women", "Men"][x], index=1)
+        # chol = st.slider("Your Cholesterol Measurement[mg/dl] [chol]", 200, 600, value= 400)
+        # st.text("Is Your Fasting Blood Sugar Greater Than 120 mg/dl? [fbs]")
+        # fbs = st.checkbox("Yes it is")
         
-        restecg = st.selectbox("Your Resting ECG Results [restecg]", [0, 1, 2],
-                               format_func=lambda x: ["normal",
-                                                    "having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)",
-                                                    "showing probable or definite left ventricular hypertrophy by Estes’ criteria"][x],
-                               index=0
-        )
+        # restecg = st.selectbox("Your Resting ECG Results [restecg]", [0, 1, 2],
+        #                        format_func=lambda x: ["normal",
+        #                                             "having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)",
+        #                                             "showing probable or definite left ventricular hypertrophy by Estes’ criteria"][x],
+        #                        index=0
+        # )
 
-        oldpeak = st.slider("Your ST depression induced by exercise relative to rest [oldpeak]", 0.0, 6.0, value=3.0)
-        thalach = st.slider("Your Maximum Heart Rate [thalach]", 70, 200, value=145)
+        # oldpeak = st.slider("Your ST depression induced by exercise relative to rest [oldpeak]", 0.0, 6.0, value=3.0)
+        # thalach = st.slider("Your Maximum Heart Rate [thalach]", 70, 200, value=145)
 
-        cp = st.selectbox("------ Your Chest Pain Type [cp] -----", [0, 1, 2, 3],
+        cp = st.selectbox("Your Chest Pain Type [cp]", [0, 1, 2, 3],
                           format_func=lambda x: ["asymptomatic (tünetmentes)", "atypical angina", "typical angina (H)", "non-anginal pain"][x], index=0)
-        trtbps = st.slider("------ Your Resting Blood Pressure [mm/Hg] [trtbps] --------", 90, 200, value=120, step=5)
-        st.text("------- Have You Ever Experienced Angina When Exercising? [exng] --------")
+        trtbps = st.slider("Your Resting Blood Pressure [mm/Hg] [trtbps] ", 90, 200, value=120, step=5)
+        st.text("Have You Ever Experienced Angina When Exercising? [exng] ")
         exng = st.checkbox("Yes I have")
-        slp = st.selectbox("------- The slope of the peak exercise ST segment [slp] -------", [0, 1, 2], format_func=lambda x: ["downsloping (L)", "flat", "upsloping (H)"][x]
+        slp = st.selectbox("The slope of the peak exercise ST segment [slp]", [0, 1, 2], format_func=lambda x: ["downsloping (L)", "flat", "upsloping (H)"][x]
         )
-        caa = st.slider("-------- The number of major vessels (0–4) [caa] --------", 0, 4, value=1, step=1)
-        thall = st.selectbox("-------- A blood disorder called thalassemia [thall] --------", [0, 1, 2],
+        caa = st.slider("The number of major vessels (0–4) [caa] ", 0, 4, value=1, step=1)
+        thall = st.selectbox("A blood disorder called thalassemia [thall] ", [0, 1, 2],
                             format_func=lambda x: ["normal blood flow (L)",
                             "fixed defect (no blood flow in some part of the heart) (H)",
                             "reversible defect (a blood flow is observed but it is not normal)"][x]
         ) # add +1 at input data
         #['cp', 'trtbps', 'exng', 'slp', 'caa', 'thall']
         submitted = st.form_submit_button("Submit")
+        age = 18
+        sex = 1
+        chol = 130
+        fbs = 0.32
+        restecg = 1
+        thalach = 150
+        oldpeak = 1.0
+
 
         if submitted:
 
@@ -110,7 +118,10 @@ def run_webapp(model):
                 "caa": caa,
                 "thall": thall+1
             }
+            required_cols = ['cp', 'trtbps', 'exng', 'slp', 'caa', 'thall']
+            
             input_df = pd.DataFrame([input_data])
+            input_df_show = input_df[required_cols]
 
             scaler = joblib.load("scaler_cp_trtbps_exng_slp_caa_thall.pkl")
 
@@ -121,13 +132,11 @@ def run_webapp(model):
             print("input DataFrame:", input_df_scaled, sep="\n")
 
 
-            required_cols = ['cp', 'trtbps', 'exng', 'slp', 'caa', 'thall']
             try:
                 input_df_scaled = input_df_scaled[required_cols]
             except KeyError as e:
                 st.error(f"Missing column: {e}")
                 st.stop()
-
 
 
             prediction = model.predict(input_df_scaled)[0]
@@ -137,13 +146,14 @@ def run_webapp(model):
             prediction_label = "High risk" if prediction == 1 else "Low risk"
             st.write(f"### Prediction: {prediction_label}")
 
-            input_df["prediction"] = prediction_label
+            input_df_show["prediction"] = prediction_label
             # Debug
             print("Updated Input DataFrame:\n", input_df, sep="\n")
-            if "results_df" not in st.session_state:
-                st.session_state["results_df"] = pd.DataFrame(columns=input_df.columns)
 
-            st.session_state["results_df"] = pd.concat([st.session_state["results_df"], input_df], ignore_index=True)
+            if "results_df" not in st.session_state:
+                st.session_state["results_df"] = pd.DataFrame(columns=input_df_show.columns)
+
+            st.session_state["results_df"] = pd.concat([st.session_state["results_df"], input_df_show], ignore_index=True)
 
             st.write("### Recorded Inputs and Predictions")
             st.dataframe(st.session_state["results_df"])
